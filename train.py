@@ -2,8 +2,13 @@ import torch
 import torch.nn as nn
 from transformers import AutoProcessor, AutoModelForPreTraining, AutoTokenizer, AutoModelForCausalLM
 from datasets import load_dataset
-from huggingface_hub import snapshot_download
+from huggingface_hub import snapshot_download, login as hf_login
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+hf_login(os.getenv("HF_TOKEN"))
 
 wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
 wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
