@@ -1,17 +1,34 @@
 import torch
 import torch.nn as nn
-from transformers import AutoProcessor, AutoModelForPreTraining
+from transformers import AutoProcessor, AutoModelForPreTraining, AutoTokenizer, AutoModelForCausalLM
 from datasets import load_dataset
 from huggingface_hub import snapshot_download
+import os
 
 wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
 wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
 
-dataset = snapshot_download(repo_id="openslr/librispeech_asr", repo_type="dataset")
+tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
+llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
+
+dataset = snapshot_download(
+    repo_id="openslr/librispeech_asr",
+    repo_type="dataset",
+    revision="main",
+    max_workers=os.cpu_count(),
+)
 dataset = load_dataset("openslr/librispeech_asr", split="train.100")
 print(dataset)
 print(dataset[0])
+
+print('quitting...')
 quit()
+
+
+llama_vocab_size = 128256
+llama_sos_token = 
+llama_eos_token = 
+llama_pad_token = 
 
 WAV2VEC_SAMPLE_RATE = 16000
 WAV2VEC_LATENT_DIM = 768
