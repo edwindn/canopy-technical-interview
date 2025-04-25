@@ -6,7 +6,7 @@ from datasets import load_dataset
 wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
 wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
 
-dataset = load_dataset("openslr/librispeech_asr_wav2vec2_v2", split="train.100")
+dataset = load_dataset("openslr/librispeech_asr", split="train.100")
 print(dataset)
 print(dataset[0])
 quit()
