@@ -26,9 +26,9 @@ quit()
 
 
 llama_vocab_size = 128256
-llama_sos_token = 
-llama_eos_token = 
-llama_pad_token = 
+llama_sos_token = 0
+llama_eos_token = 0
+llama_pad_token = 0
 
 WAV2VEC_SAMPLE_RATE = 16000
 WAV2VEC_LATENT_DIM = 768
