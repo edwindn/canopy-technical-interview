@@ -7,7 +7,7 @@ from huggingface_hub import snapshot_download
 wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
 wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
 
-dataset = snapshot_download("openslr/librispeech_asr")
+dataset = snapshot_download(repo_id="openslr/librispeech_asr", repo_type="dataset")
 dataset = load_dataset("openslr/librispeech_asr", split="train.100")
 print(dataset)
 print(dataset[0])
