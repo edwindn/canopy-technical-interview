@@ -50,6 +50,8 @@ wav2vec2 = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base")
 llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
 tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
 
+print('hidden dim: ', llama.config.hidden_size)
+
 def map_fn(batch):
     text = batch["text"].lower()
     audio = batch["audio"]["array"]
