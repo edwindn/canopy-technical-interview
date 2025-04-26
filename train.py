@@ -108,7 +108,7 @@ class Audio2Llama(PreTrainedModel):
 
     def forward(self, 
                 audio: torch.Tensor,
-                audio_attention_mask: torch.Tensor,
+                #audio_attention_mask: torch.Tensor,
                 labels: torch.Tensor):
         """
         audio: float32 waveform (batch, samples)
