@@ -37,8 +37,35 @@ dataset = list(dataset)
 dataset = Dataset.from_list(dataset)
 
 print(f"Created dataset with {len(dataset)} examples")
-print(dataset[0])
-print(dataset)
+print(dataset[0]["audio"].keys())
+quit()
+
+
+wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
+wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
+
+tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
+llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
+
+def map_fn(batch):
+    text = batch["text"].lower()
+    audio = batch["audio"]["array"]
+    sr = batch["audio"]["sampling_rate"]
+
+    if sr != WAV2VEC_SAMPLE_RATE:
+        audio = librosa.resample(
+            y=audio,
+            orig_sr=sr, 
+            target_sr=WAV2VEC_SAMPLE_RATE
+        )
+
+    text_tokens = tokenizer(text).input_ids
+    audio_tokens = wav2vec_processor(audio, sampling_rate=WAV2VEC_SAMPLE_RATE).input_ids
+
+    return {"input_ids": audio_tokens, "attention_mask": [1] * len(audio_tokens), "labels": text_tokens}
+
+
+
 
 print('quitting...')
 quit()
@@ -74,13 +101,6 @@ class GatedMLP(nn.Module):
 
 
 model = GatedMLP(input_dim=WAV2VEC_LATENT_DIM, hidden_dim=1024, output_dim=LLAMA_INPUT_DIM)
-
-
-wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
-wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
-
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
-llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
 
 training_args = TrainingArguments(
     output_dir="results",
