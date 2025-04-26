@@ -11,13 +11,6 @@ load_dotenv()
 
 hf_login(os.getenv("HF_TOKEN"))
 
-
-wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
-wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
-
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
-llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
-
 # dataset = snapshot_download(
 #     repo_id="openslr/librispeech_asr",
 #     repo_type="dataset",
@@ -79,6 +72,11 @@ class GatedMLP(nn.Module):
 model = GatedMLP(input_dim=WAV2VEC_LATENT_DIM, hidden_dim=1024, output_dim=LLAMA_INPUT_DIM)
 
 
+wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
+wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
+
+tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
+llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
 
 training_args = TrainingArguments(
     output_dir="results",
