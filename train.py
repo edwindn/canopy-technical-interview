@@ -67,7 +67,7 @@ def map_fn(batch):
     text_tokens = tokenizer(text).input_ids
     #audio_tokens = wav2vec_processor(audio, sampling_rate=WAV2VEC_SAMPLE_RATE).input_ids
 
-    return {"audio": audio, "audio_attention_mask": [1] * len(audio), "labels": text_tokens}
+    return {"audio": audio, "labels": text_tokens}
 
 dataset = dataset.map(map_fn, batched=False, num_proc=1, remove_columns=["text", "audio"])
 #dataset = dataset.with_format(type="torch", columns=["audio", "audio_attention_mask", "labels"])
@@ -124,11 +124,22 @@ class Audio2Llama(PreTrainedModel):
 
         text_tokens = self.llama.model.embed_tokens(labels) # ?
 
-        inputs_embeds = torch.cat([projected, text_tokens], dim=1)
-        attention_mask  = torch.cat([audio_attention_mask, torch.ones_like(labels)], dim=1)
+        B, T_feat, C = projected.size()
+        T_txt = labels.size(1)
 
-        ignore_audio = torch.full_like(audio_attention_mask, -100) # ?
-        labels_padded = torch.cat([ignore_audio, labels], dim=1) # ?
+        # 4) build attention_mask at feature-level
+        audio_mask = torch.ones(B, T_feat, device=projected.device, dtype=torch.long)
+        text_mask  = torch.ones(B, T_txt,  device=projected.device, dtype=torch.long)
+        attention_mask = torch.cat([audio_mask, text_mask], dim=1)       # (B, T_feat+T_txt)
+
+        # 5) pad labels with –100 over the audio frames
+        ignore_audio = torch.full((B, T_feat), -100, device=projected.device, dtype=labels.dtype)
+        labels_padded = torch.cat([ignore_audio, labels], dim=1)         # (B, T_feat+T_txt)
+
+        # 6) final inputs_embeds for LLaMA
+        inputs_embeds = torch.cat([projected, text_tokens], dim=1)            # (B, T_feat+T_txt, C)
+
+
 
         out = self.llama(
             inputs_embeds=inputs_embeds,
