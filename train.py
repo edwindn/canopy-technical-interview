@@ -115,11 +115,10 @@ class Audio2Llama(PreTrainedModel):
         """
         wav2vec_outputs = self.wav2vec(
             input_values=audio,
-            output_hidden_states=True,
             return_dict=True,
         )
 
-        feats = wav2vec_outputs.hidden_states.last_hidden_state
+        feats = wav2vec_outputs.last_hidden_state
 
         projected = self.projection(feats)
 
