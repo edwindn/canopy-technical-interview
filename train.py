@@ -39,7 +39,7 @@ stream = load_dataset(
     streaming=True,
 )
 
-dataset = itertools.islice(stream, 10)
+dataset = itertools.islice(stream, 10000)
 dataset = list(dataset)
 dataset = Dataset.from_list(dataset)
 
