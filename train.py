@@ -5,10 +5,12 @@ from datasets import load_dataset
 from huggingface_hub import snapshot_download, login as hf_login
 import os
 from dotenv import load_dotenv
+import itertools
 
 load_dotenv()
 
 hf_login(os.getenv("HF_TOKEN"))
+
 
 wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
 wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
@@ -22,16 +24,31 @@ llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
 #     revision="main",
 #     max_workers=os.cpu_count(),
 # )
-dataset = load_dataset("openslr/librispeech_asr", split="test")
-print(dataset)
-print(dataset[0])
+# dataset = load_dataset("openslr/librispeech_asr", split="test")
+# print(dataset)
+# print(dataset[0])
+
+# 1. load as a stream
+stream = load_dataset(
+    "openslr/librispeech_asr",
+    split="test",
+    streaming=True,            # ← streaming mode
+)
+
+# 2. take however many examples you actually need, e.g. 100
+subset_iter = itertools.islice(stream, 100)
+
+# 3. now you can loop or convert to a list
+for example in subset_iter:
+    print(example["audio"]["array"].shape, example["text"])
+
 
 print('quitting...')
 quit()
 
 
 llama_vocab_size = 128256
-llama_sos_token = 0
+llama_sos_token = 0 ## TODO
 llama_eos_token = 0
 llama_pad_token = 0
 
