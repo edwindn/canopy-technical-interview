@@ -31,12 +31,13 @@ stream = load_dataset(
 )
 
 # 2. take however many examples you actually need, e.g. 100
-dataset = itertools.islice(stream, 100000)
+dataset = itertools.islice(stream, 10000)
 # Convert iterator to list and create Dataset
 dataset = list(dataset)
 dataset = Dataset.from_list(dataset)
 
 print(f"Created dataset with {len(dataset)} examples")
+print(dataset[0])
 print(dataset)
 
 print('quitting...')
