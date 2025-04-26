@@ -34,7 +34,6 @@ stream = load_dataset(
 dataset = itertools.islice(stream, 100)
 
 print(dataset)
-print(dataset[0])
 
 print('quitting...')
 quit()
