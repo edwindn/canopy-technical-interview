@@ -39,7 +39,7 @@ stream = load_dataset(
     streaming=True,
 )
 
-dataset = itertools.islice(stream, 10000)
+dataset = itertools.islice(stream, 100000)
 dataset = list(dataset)
 dataset = Dataset.from_list(dataset)
 
@@ -166,7 +166,7 @@ model.llama.eval()
 
 
 training_args = TrainingArguments(
-  output_dir="results",
+  output_dir="audio2llama-test",
   per_device_train_batch_size=1,
   gradient_accumulation_steps=1,
   learning_rate=1e-3,
