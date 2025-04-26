@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from transformers import AutoProcessor, AutoModelForPreTraining, AutoTokenizer, AutoModelForCausalLM, PreTrainedModel, Trainer, TrainingArguments
+from transformers import AutoProcessor, AutoModelForPreTraining, AutoModelForCausalLM, PreTrainedModel, Trainer, TrainingArguments
 from datasets import load_dataset, Dataset
 from huggingface_hub import snapshot_download, login as hf_login
 import os
@@ -45,11 +45,11 @@ print(f"Created dataset with {len(dataset)} examples")
 
 wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
 wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
-
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
 llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
 
 def map_fn(batch):
+    from transformers import AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
     text = batch["text"].lower()
     audio = batch["audio"]["array"]
     sr = batch["audio"]["sampling_rate"]
@@ -66,9 +66,7 @@ def map_fn(batch):
 
     return {"audio": audio, "audio_attention_mask": [1] * len(audio), "labels": text_tokens}
 
-tokenizer.pad_token_id = tokenizer.eos_token_id
-
-dataset = dataset.map(map_fn, batched=False, num_proc=1, remove_columns=["text", "audio"])
+dataset = dataset.map(map_fn, batched=False, num_proc=8, remove_columns=["text", "audio"])
 #dataset = dataset.with_format(type="torch", columns=["audio", "audio_attention_mask", "labels"])
 
 # ----------------------- #
@@ -102,9 +100,7 @@ projection_layer = GatedMLP(input_dim=WAV2VEC_LATENT_DIM, hidden_dim=1024, outpu
 
 class Audio2Llama(PreTrainedModel):
     def __init__(self):
-        self.llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
-        config = self.llama.config
-        super().__init__(config=config)
+        super().__init__(config=llama.config)
 
         self.processor  = wav2vec_processor
         self.wav2vec    = wav2vec2
