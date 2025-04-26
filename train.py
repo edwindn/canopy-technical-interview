@@ -24,7 +24,7 @@ hf_login(os.getenv("HF_TOKEN"))
 # 1. load as a stream
 stream = load_dataset(
     "openslr/librispeech_asr",
-    split="test",
+    split="train.clean.100",
     streaming=True,            # ← streaming mode
 )
 
