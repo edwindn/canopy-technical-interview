@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from transformers import AutoProcessor, AutoModelForPreTraining, AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoProcessor, AutoModelForPreTraining, AutoTokenizer, AutoModelForCausalLM, PreTrainedModel, Trainer, TrainingArguments
 from datasets import load_dataset, Dataset
 from huggingface_hub import snapshot_download, login as hf_login
 import os
@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import itertools
 import soundfile
 import librosa
+import wandb
 
 load_dotenv()
 
@@ -22,6 +23,8 @@ hf_login(os.getenv("HF_TOKEN"))
 # dataset = load_dataset("openslr/librispeech_asr", split="test")
 # print(dataset)
 # print(dataset[0])
+
+wandb.init(project="audio2llama-test")
 
 # 1. load as a stream
 stream = load_dataset(
@@ -58,20 +61,21 @@ def map_fn(batch):
         )
 
     text_tokens = tokenizer(text).input_ids
-    audio_tokens = wav2vec_processor(audio, sampling_rate=WAV2VEC_SAMPLE_RATE).input_ids
+    #audio_tokens = wav2vec_processor(audio, sampling_rate=WAV2VEC_SAMPLE_RATE).input_ids
 
-    return {"input_ids": audio_tokens, "attention_mask": [1] * len(audio_tokens), "labels": text_tokens}
+    return {"audio": audio, "audio_attention_mask": [1] * len(audio), "labels": text_tokens}
 
-print(tokenizer.pad_token_id, tokenizer.eos_token_id, tokenizer.bos_token_id)
-quit()
+tokenizer.pad_token_id = tokenizer.eos_token_id
 
-dataset = dataset.map(map_fn, batched=False, num_proc=os.cpu_count())
+dataset = dataset.map(map_fn, batched=False, num_proc=os.cpu_count(), remove_columns=["text", "audio"])
+dataset = dataset.with_format(type="torch", columns=["audio", "audio_attention_mask", "labels"])
 
+# ----------------------- #
 
 llama_vocab_size = 128256
-llama_sos_token = 0 ## TODO
-llama_eos_token = 0
-llama_pad_token = 0
+llama_sos_token = 128000
+llama_eos_token = 128001
+llama_pad_token = 128001
 
 WAV2VEC_SAMPLE_RATE = 16000
 WAV2VEC_LATENT_DIM = 768
@@ -97,22 +101,80 @@ class GatedMLP(nn.Module):
     
 
 
-model = GatedMLP(input_dim=WAV2VEC_LATENT_DIM, hidden_dim=1024, output_dim=LLAMA_INPUT_DIM)
+projection_layer = GatedMLP(input_dim=WAV2VEC_LATENT_DIM, hidden_dim=1024, output_dim=LLAMA_INPUT_DIM)
+
+class Audio2Llama(PreTrainedModel):
+    def __init__(self):
+        # load components
+        super().__init__(config=None)
+        self.processor  = wav2vec_processor
+        self.wav2vec    = wav2vec2
+        self.projection = projection_layer
+        self.llama      = llama
+
+    def forward(self, 
+                audio: torch.Tensor,
+                audio_attention_mask: torch.Tensor,
+                labels: torch.Tensor):
+        """
+        audio: float32 waveform (batch, samples)
+        audio_attention_mask: not used by wav2vec but for llama we pass later
+        labels: token-ids for text (batch, tgt_len)
+        """
+        # 1) extract wav2vec features
+        wav2vec_outputs = self.wav2vec(
+            input_values=audio,
+            output_hidden_states=True,
+            return_dict=True,
+        )
+        # last_hidden_state: (B, T_audio, hidden_dim)
+        feats = wav2vec_outputs.hidden_states.last_hidden_state
+
+        # 2) project into LLaMA embedding-space
+        projected = self.projection(feats)           # (B, T_audio, llama_dim)
+
+        # 3) feed into Llama as “input_embeds”
+        lm = self.llama(
+            inputs_embeds=projected,
+            attention_mask=audio_attention_mask,
+            labels=labels,
+            return_dict=True,
+        )
+        return lm.loss, lm.logits
+    
+
+
+
+model = Audio2Llama()
+
+
+
+
 
 training_args = TrainingArguments(
-    output_dir="results",
-    evaluation_strategy="epoch",
-    learning_rate=2e-5,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=16,
+  output_dir="results",
+  per_device_train_batch_size=8,
+  per_device_eval_batch_size=8,
+  gradient_accumulation_steps=2,
+  learning_rate=2e-5,
+  num_train_epochs=3,
+  evaluation_strategy="steps",
+  eval_steps=500,
+  save_total_limit=2,
+  fp16=True,
+  logging_dir="logs",
+  logging_steps=5,
+  report_to="wandb",
 )
 
 trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_dataset,
-    eval_dataset=test_dataset,
+  model=model,
+  args=training_args,
+  train_dataset=dataset,
 )
 
 print("training...")
 trainer.train()
+
+print("pushing to hub...")
+model.push_to_hub("audio2llama-test")
