@@ -6,6 +6,8 @@ from huggingface_hub import snapshot_download, login as hf_login
 import os
 from dotenv import load_dotenv
 import itertools
+import soundfile
+import librosa
 
 load_dotenv()
 
@@ -29,12 +31,11 @@ stream = load_dataset(
 )
 
 # 2. take however many examples you actually need, e.g. 100
-subset_iter = itertools.islice(stream, 100)
+dataset = itertools.islice(stream, 100)
 
 # 3. now you can loop or convert to a list
 for example in subset_iter:
     print(example["audio"]["array"].shape, example["text"])
-
 
 print('quitting...')
 quit()
