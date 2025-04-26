@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoProcessor, AutoModelForPreTraining, AutoModelForCausalLM, PreTrainedModel, Trainer, TrainingArguments, AutoTokenizer, Wav2Vec2Model
+from transformers import AutoProcessor, AutoModelForPreTraining, AutoModelForCausalLM, PreTrainedModel, Trainer, TrainingArguments, AutoTokenizer, Wav2Vec2Model, default_data_collator
 from datasets import load_dataset, Dataset
 from huggingface_hub import snapshot_download, login as hf_login
 import os
@@ -164,6 +164,7 @@ trainer = Trainer(
   model=model,
   args=training_args,
   train_dataset=dataset,
+  data_collator=default_data_collator,
 )
 
 print("training...")
