@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from transformers import AutoProcessor, AutoModelForPreTraining, AutoTokenizer, AutoModelForCausalLM
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from huggingface_hub import snapshot_download, login as hf_login
 import os
 from dotenv import load_dotenv
@@ -32,7 +32,11 @@ stream = load_dataset(
 
 # 2. take however many examples you actually need, e.g. 100
 dataset = itertools.islice(stream, 100)
+# Convert iterator to list and create Dataset
+dataset = list(dataset)
+dataset = Dataset.from_list(dataset)
 
+print(f"Created dataset with {len(dataset)} examples")
 print(dataset)
 
 print('quitting...')
