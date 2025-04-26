@@ -115,22 +115,28 @@ class Audio2Llama(PreTrainedModel):
         audio_attention_mask: not used by wav2vec but for llama we pass later
         labels: token-ids for text (batch, tgt_len)
         """
-        wav2vec_outputs = self.wav2vec(
+        feats = self.wav2vec(
             input_values=audio,
             return_dict=True,
-        )
-
-        feats = wav2vec_outputs.last_hidden_state
+        ).last_hidden_state
 
         projected = self.projection(feats)
 
-        lm = self.llama(
-            inputs_embeds=projected,
-            attention_mask=audio_attention_mask,
-            labels=labels,
+        text_tokens = self.llama.model.embed_tokens(labels) # ?
+
+        inputs_embeds = torch.cat([projected, text_tokens], dim=1)
+        attention_mask  = torch.cat([audio_attention_mask, torch.ones_like(labels)], dim=1)
+
+        ignore_audio = torch.full_like(audio_attention_mask, -100) # ?
+        labels_padded = torch.cat([ignore_audio, labels], dim=1) # ?
+
+        out = self.llama(
+            inputs_embeds=inputs_embeds,
+            attention_mask=attention_mask,
+            labels=labels_padded,
             return_dict=True,
         )
-        return lm.loss, lm.logits
+        return out.loss, out.logits
     
 
 
