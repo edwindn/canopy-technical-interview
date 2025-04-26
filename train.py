@@ -66,8 +66,8 @@ def map_fn(batch):
 
 tokenizer.pad_token_id = tokenizer.eos_token_id
 
-dataset = dataset.map(map_fn, batched=False, num_proc=os.cpu_count(), remove_columns=["text", "audio"])
-dataset = dataset.with_format(type="torch", columns=["audio", "audio_attention_mask", "labels"])
+dataset = dataset.map(map_fn, batched=False, num_proc=1, remove_columns=["text", "audio"])
+#dataset = dataset.with_format(type="torch", columns=["audio", "audio_attention_mask", "labels"])
 
 # ----------------------- #
 
