@@ -33,9 +33,8 @@ stream = load_dataset(
 # 2. take however many examples you actually need, e.g. 100
 dataset = itertools.islice(stream, 100)
 
-# 3. now you can loop or convert to a list
-for example in subset_iter:
-    print(example["audio"]["array"].shape, example["text"])
+print(dataset)
+print(dataset[0])
 
 print('quitting...')
 quit()
