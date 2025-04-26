@@ -15,7 +15,7 @@ import accelerate
 
 WAV2VEC_SAMPLE_RATE = 16000
 WAV2VEC_LATENT_DIM = 768
-LLAMA_INPUT_DIM = 3200
+LLAMA_INPUT_DIM = 3072 # llama.config.hidden_size
 
 load_dotenv()
 
