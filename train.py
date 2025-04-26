@@ -10,6 +10,11 @@ import soundfile
 import librosa
 import wandb
 
+
+WAV2VEC_SAMPLE_RATE = 16000
+WAV2VEC_LATENT_DIM = 768
+LLAMA_INPUT_DIM = 3200
+
 load_dotenv()
 
 hf_login(os.getenv("HF_TOKEN"))
@@ -75,10 +80,6 @@ llama_vocab_size = 128256
 llama_sos_token = 128000
 llama_eos_token = 128001
 llama_pad_token = 128001
-
-WAV2VEC_SAMPLE_RATE = 16000
-WAV2VEC_LATENT_DIM = 768
-LLAMA_INPUT_DIM = 3200
 
 class GatedMLP(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
