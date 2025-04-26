@@ -146,8 +146,12 @@ class Audio2Llama(PreTrainedModel):
 
 model = Audio2Llama()
 
+for param in model.wav2vec.parameters():
+    param.requires_grad = False
 
-
+model.wav2vec.eval()
+model.projection.train()
+model.llama.train()
 
 
 training_args = TrainingArguments(
