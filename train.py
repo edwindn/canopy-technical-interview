@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoProcessor, AutoModelForPreTraining, AutoModelForCausalLM, PreTrainedModel, Trainer, TrainingArguments, AutoTokenizer
+from transformers import AutoProcessor, AutoModelForPreTraining, AutoModelForCausalLM, PreTrainedModel, Trainer, TrainingArguments, AutoTokenizer, Wav2Vec2Model
 from datasets import load_dataset, Dataset
 from huggingface_hub import snapshot_download, login as hf_login
 import os
@@ -46,7 +46,7 @@ dataset = Dataset.from_list(dataset)
 print(f"Created dataset with {len(dataset)} examples")
 
 wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
-wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
+wav2vec2 = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base")
 llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
 tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
 
