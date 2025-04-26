@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from transformers import AutoProcessor, AutoModelForPreTraining, AutoModelForCausalLM, PreTrainedModel, Trainer, TrainingArguments, AutoTokenizer
 from datasets import load_dataset, Dataset
 from huggingface_hub import snapshot_download, login as hf_login
@@ -80,19 +81,15 @@ class GatedMLP(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
         super().__init__()
         
-        self.layers = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim),
-            nn.ReLU(),
-            nn.Linear(output_dim, output_dim),
-            nn.ReLU(),
-            
-        )
+        self.linear1 = nn.Linear(input_dim, hidden_dim)
+        self.linear2 = nn.Linear(input_dim, hidden_dim)
+        self.proj = nn.Linear(hidden_dim, output_dim)
         
     def forward(self, x):
-        x = self.layers(x)
-        return x
+        x1 = self.linear1(x)
+        x2 = self.linear2(x)
+        x = F.silu(x1) * x2
+        return self.proj(x)
     
 
 
@@ -142,16 +139,19 @@ model = Audio2Llama()
 for param in model.wav2vec.parameters():
     param.requires_grad = False
 
+for param in model.llama.parameters():
+    param.requires_grad = False
+
 model.wav2vec.eval()
 model.projection.train()
-model.llama.train()
+model.llama.eval()
 
 
 training_args = TrainingArguments(
   output_dir="results",
   per_device_train_batch_size=1,
   gradient_accumulation_steps=1,
-  learning_rate=2e-5,
+  learning_rate=1e-3,
   num_train_epochs=1,
   eval_steps=500,
   save_total_limit=2,
