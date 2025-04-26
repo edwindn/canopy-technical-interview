@@ -31,16 +31,13 @@ hf_login(os.getenv("HF_TOKEN"))
 
 wandb.init(project="audio2llama-test")
 
-# 1. load as a stream
 stream = load_dataset(
     "openslr/librispeech_asr",
     split="train.clean.100",
-    streaming=True,            # ← streaming mode
+    streaming=True,
 )
 
-# 2. take however many examples you actually need, e.g. 100
 dataset = itertools.islice(stream, 1000)
-# Convert iterator to list and create Dataset
 dataset = list(dataset)
 dataset = Dataset.from_list(dataset)
 
@@ -105,8 +102,10 @@ projection_layer = GatedMLP(input_dim=WAV2VEC_LATENT_DIM, hidden_dim=1024, outpu
 
 class Audio2Llama(PreTrainedModel):
     def __init__(self):
-        # load components
-        super().__init__(config=None)
+        self.llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
+        config = self.llama.config
+        super().__init__(config=config)
+
         self.processor  = wav2vec_processor
         self.wav2vec    = wav2vec2
         self.projection = projection_layer
@@ -121,19 +120,16 @@ class Audio2Llama(PreTrainedModel):
         audio_attention_mask: not used by wav2vec but for llama we pass later
         labels: token-ids for text (batch, tgt_len)
         """
-        # 1) extract wav2vec features
         wav2vec_outputs = self.wav2vec(
             input_values=audio,
             output_hidden_states=True,
             return_dict=True,
         )
-        # last_hidden_state: (B, T_audio, hidden_dim)
+
         feats = wav2vec_outputs.hidden_states.last_hidden_state
 
-        # 2) project into LLaMA embedding-space
-        projected = self.projection(feats)           # (B, T_audio, llama_dim)
+        projected = self.projection(feats)
 
-        # 3) feed into Llama as “input_embeds”
         lm = self.llama(
             inputs_embeds=projected,
             attention_mask=audio_attention_mask,
