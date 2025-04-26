@@ -41,7 +41,6 @@ dataset = Dataset.from_list(dataset)
 
 print(f"Created dataset with {len(dataset)} examples")
 
-
 wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
 wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
 
@@ -79,7 +78,7 @@ llama_pad_token = 128001
 
 WAV2VEC_SAMPLE_RATE = 16000
 WAV2VEC_LATENT_DIM = 768
-LLAMA_INPUT_DIM = None
+LLAMA_INPUT_DIM = 3200
 
 class GatedMLP(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
