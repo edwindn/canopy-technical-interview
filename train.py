@@ -37,8 +37,6 @@ dataset = list(dataset)
 dataset = Dataset.from_list(dataset)
 
 print(f"Created dataset with {len(dataset)} examples")
-print(dataset[0]["audio"].keys())
-quit()
 
 
 wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
@@ -64,11 +62,10 @@ def map_fn(batch):
 
     return {"input_ids": audio_tokens, "attention_mask": [1] * len(audio_tokens), "labels": text_tokens}
 
-
-
-
-print('quitting...')
+print(tokenizer.pad_token_id, tokenizer.eos_token_id, tokenizer.bos_token_id)
 quit()
+
+dataset = dataset.map(map_fn, batched=False, num_proc=os.cpu_count())
 
 
 llama_vocab_size = 128256
