@@ -16,13 +16,13 @@ wav2vec2 = AutoModelForPreTraining.from_pretrained("facebook/wav2vec2-base")
 tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B")
 llama = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B")
 
-dataset = snapshot_download(
-    repo_id="openslr/librispeech_asr",
-    repo_type="dataset",
-    revision="main",
-    max_workers=os.cpu_count(),
-)
-dataset = load_dataset("openslr/librispeech_asr", split="train.100")
+# dataset = snapshot_download(
+#     repo_id="openslr/librispeech_asr",
+#     repo_type="dataset",
+#     revision="main",
+#     max_workers=os.cpu_count(),
+# )
+dataset = load_dataset("openslr/librispeech_asr", split="test")
 print(dataset)
 print(dataset[0])
 
