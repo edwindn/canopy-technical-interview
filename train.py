@@ -9,6 +9,7 @@ import itertools
 import soundfile
 import librosa
 import wandb
+import accelerate
 
 
 WAV2VEC_SAMPLE_RATE = 16000
@@ -37,7 +38,7 @@ stream = load_dataset(
     streaming=True,
 )
 
-dataset = itertools.islice(stream, 1000)
+dataset = itertools.islice(stream, 10)
 dataset = list(dataset)
 dataset = Dataset.from_list(dataset)
 
@@ -148,11 +149,10 @@ model.llama.train()
 
 training_args = TrainingArguments(
   output_dir="results",
-  per_device_train_batch_size=8,
-  per_device_eval_batch_size=8,
-  gradient_accumulation_steps=2,
+  per_device_train_batch_size=1,
+  gradient_accumulation_steps=1,
   learning_rate=2e-5,
-  num_train_epochs=3,
+  num_train_epochs=1,
   eval_steps=500,
   save_total_limit=2,
   fp16=True,
